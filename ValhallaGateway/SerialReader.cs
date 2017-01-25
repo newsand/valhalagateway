@@ -6,10 +6,7 @@ using System.Threading.Tasks;
 
 namespace ValhallaGateway
 {
-    class Program
+    class SerialReader
     {
-        static void Main(string[] args)
-        {
-        }
     }
 }

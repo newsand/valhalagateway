@@ -1,1 +1,6 @@
 E:\Repositorios\ProjectValhalla\valhalagatway\ValhallaGateway\bin\Debug\ValhallaGateway.exe.config
+E:\Repositorios\ProjectValhalla\valhalagatway\ValhallaGateway\bin\Debug\ValhallaGateway.exe
+E:\Repositorios\ProjectValhalla\valhalagatway\ValhallaGateway\bin\Debug\ValhallaGateway.pdb
+E:\Repositorios\ProjectValhalla\valhalagatway\ValhallaGateway\obj\Debug\ValhallaGateway.csprojResolveAssemblyReference.cache
+E:\Repositorios\ProjectValhalla\valhalagatway\ValhallaGateway\obj\Debug\ValhallaGateway.exe
+E:\Repositorios\ProjectValhalla\valhalagatway\ValhallaGateway\obj\Debug\ValhallaGateway.pdb
