@@ -8,74 +8,86 @@ using System.Threading.Tasks;
 
 namespace ValhallaGateway
 {
-    class MainDoor
+    class SerialConector
     {
-        static bool _continue;
-        static SerialPort _serialPort;
+        #region Memberes
+        private static int K_CONETION_RETRIES = 5;
+        private int m_conectionTries;
+        private bool m_continue;
+        
+        private SerialPort m_serialPort;
+        private Thread m_readingThread;
+        private Thread m_writingThread;
+        private Thread m_postingThread;
+        #endregion
 
-        public static void Main()
+        #region Create
+        public SerialConector(String p_portName,int p_boudRate, Parity p_parityConfig, int p_dataBits, StopBits p_stopBits, int p_readTimeout, int p_writeTimeout, Handshake p_handshake)
         {
-            string name;
-            string message;
-            StringComparer stringComparer = StringComparer.OrdinalIgnoreCase;
-            Thread readThread = new Thread(Read);
-
-            // Create a new SerialPort object with default settings.
-            _serialPort = new SerialPort();
-
-            // Allow the user to set the appropriate properties.
-            _serialPort.PortName = SetPortName(_serialPort.PortName);
-            _serialPort.BaudRate = SetPortBaudRate(_serialPort.BaudRate);
-            _serialPort.Parity = SetPortParity(_serialPort.Parity);
-            _serialPort.DataBits = SetPortDataBits(_serialPort.DataBits);
-            _serialPort.StopBits = SetPortStopBits(_serialPort.StopBits);
-            _serialPort.Handshake = SetPortHandshake(_serialPort.Handshake);
-
-            // Set the read/write timeouts
-            _serialPort.ReadTimeout = 500;
-            _serialPort.WriteTimeout = 500;
-
-            _serialPort.Open();
-            _continue = true;
-            readThread.Start();
-
-            Console.Write("Name: ");
-            name = Console.ReadLine();
-
-            Console.WriteLine("Type QUIT to exit");
-
-            while (_continue)
-            {
-                message = Console.ReadLine();
-
-                if (stringComparer.Equals("quit", message))
-                {
-                    _continue = false;
-                }
-                else
-                {
-                    _serialPort.WriteLine(
-                        String.Format("<{0}>: {1}", name, message));
-                }
-            }
-
-            readThread.Join();
-            _serialPort.Close();
+            //m_serialPort = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
+            m_serialPort = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
+            m_serialPort.Handshake = p_handshake;
+            m_serialPort.WriteTimeout = p_writeTimeout;
+            m_serialPort.ReadTimeout = p_readTimeout;
+            m_readingThread = new Thread(Read);
+            m_readingThread = new Thread(Read);
+            m_readingThread = new Thread(Read);
         }
-
-        public static void Read()
+        //Destructor
+        ~SerialConector()
         {
-            while (_continue)
+            Dispose(false);
+        }
+        #endregion
+
+        #region Threading
+        public void StartReading()
+        {
+            m_continue = true;
+            m_readingThread.Start();
+        }
+        public void Startposting()
+        {
+            m_continue = true;
+            m_postingThread.Start();
+        }
+        public void StartWriting()
+        {
+            m_continue = true;
+            m_writingThread.Start();
+        }
+        private void Read()
+        {
+            while (m_continue)
             {
                 try
                 {
-                    string message = _serialPort.ReadLine();
+                    string message = m_serialPort.ReadLine();
                     Console.WriteLine(message);
                 }
                 catch (TimeoutException) { }
             }
         }
+        private void Post()
+        {
+            
+        }
+        private void write()
+        {
 
+        }
+        public void StopReading()
+        {
+            m_continue = false;
+            //Wait for thread to finish
+            m_readingThread.Join(/*thread timeout + 50ms*/450);
+            //Kill frozen thread
+            if (m_readingThread.IsAlive)
+                m_readingThread.Abort();
+        }
+        #endregion
+
+        #region ManualSerialConfig
         // Display Port values and prompt user to enter a port.
         public static string SetPortName(string defaultPortName)
         {
@@ -191,6 +203,59 @@ namespace ValhallaGateway
 
             return (Handshake)Enum.Parse(typeof(Handshake), handshake, true);
         }
+        #endregion
+
+        #region Serial Conection
+        public void SerialConnect()
+        {
+            m_serialPort.Open();
+        }
+
+        public void SerialDisconnect()
+        {
+            m_serialPort.Close();
+        }
+        public void SerialReconect()
+        {
+            if (m_conectionTries <= K_CONETION_RETRIES)
+            {
+                if (m_serialPort.IsOpen)
+                {
+                    try
+                    {
+                        SerialDisconnect();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("", "Cannot disconnect serial. Error: " + ex.Message);
+                    }
+                }
+
+                try
+                {
+                    SerialConnect();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("", "Cannot reconnect serial. Error: " + ex.Message);
+                }
+                m_conectionTries += 1;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            this.SerialDisconnect();
+            //Evita problemas com o garbage collector
+            if (disposing)
+                GC.SuppressFinalize(this);
+        }
+        #endregion
 
     }
 }
