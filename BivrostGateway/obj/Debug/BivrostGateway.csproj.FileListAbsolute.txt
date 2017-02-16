@@ -1,0 +1,11 @@
+E:\Repositorios\ProjectValhalla\valhalagatway\ValhallaGateway\bin\Debug\BivrostGateway.exe.config
+E:\Repositorios\ProjectValhalla\valhalagatway\ValhallaGateway\obj\Debug\BivrostGateway.csprojResolveAssemblyReference.cache
+E:\Repositorios\ProjectValhalla\valhalagatway\ValhallaGateway\bin\Debug\BivrostGateway.exe
+E:\Repositorios\ProjectValhalla\valhalagatway\ValhallaGateway\bin\Debug\BivrostGateway.pdb
+E:\Repositorios\ProjectValhalla\valhalagatway\ValhallaGateway\obj\Debug\BivrostGateway.exe
+E:\Repositorios\ProjectValhalla\valhalagatway\ValhallaGateway\obj\Debug\BivrostGateway.pdb
+E:\Repositorios\ProjectValhalla\valhalagatway\ValhallaGateway\bin\Debug\Newtonsoft.Json.dll
+E:\Repositorios\ProjectValhalla\valhalagatway\ValhallaGateway\bin\Debug\Newtonsoft.Json.xml
+E:\Repositorios\ProjectValhalla\Bivrostgatway\BivrostGateway\bin\Debug\BivrostGateway.exe.config
+E:\Repositorios\ProjectValhalla\Bivrostgatway\BivrostGateway\obj\Debug\BivrostGateway.exe
+E:\Repositorios\ProjectValhalla\Bivrostgatway\BivrostGateway\obj\Debug\BivrostGateway.pdb

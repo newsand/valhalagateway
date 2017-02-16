@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ValhallaGateway
+namespace BivrostGateway
 {
     class MainDoor
     {
@@ -19,6 +19,8 @@ namespace ValhallaGateway
             string message;
             StringComparer stringComparer = StringComparer.OrdinalIgnoreCase;
             Thread readThread = new Thread(Read);
+            WebConnector a = new WebConnector();
+            a.getData();
 
             // Create a new SerialPort object with default settings.
             _serialPort = new SerialPort();
