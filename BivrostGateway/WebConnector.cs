@@ -5,13 +5,15 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace BivrostGateway
 {
     class WebConnector
     {
         private WebClient m_client;
-        WebConnector()
+        string m_baseURL = "http://localhost:8080";
+        public WebConnector()
         {
             m_client = new WebClient();
             m_client.Headers.Add(HttpRequestHeader.Accept, "*/*");
@@ -19,7 +21,29 @@ namespace BivrostGateway
 
         }
 
-        public string getLast()
+        public TemperatureRegister getLast()
+        {
+                try
+                {
+                    string result = m_client.DownloadString(m_baseURL + "/webapi/temperature/getLast");
+                    if (result != null)
+                    {
+                        TemperatureRegister b = JsonConvert.DeserializeObject<TemperatureRegister>(result);
+                        return b;
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+                catch (WebException ex)
+                {
+                    if (ex.Status == WebExceptionStatus.ConnectFailure)
+                        System.Threading.Thread.Sleep(1500);
+                    return null;
+                }
+         }
+        public string getLast1()
         {
             WebClient webservice = new WebClient();
             webservice.Headers.Add(HttpRequestHeader.Accept, "*/*");
@@ -44,17 +68,7 @@ namespace BivrostGateway
                 return "faild";
             }
         }
-        public string insertOne()
-        {
-            string resultus = "";
-            using (var client = new WebClient())
-            {
-                client.Headers[HttpRequestHeader.ContentType] = "application/json";
-                resultus = client.UploadString("http://localhost:8080/webapi/temperature/insert", "POST", "{\"hardwareId\":8,\"sensorId\":8,\"temperature\":21.0}");
-            }
-            Console.WriteLine(resultus);
-            return resultus;
-        }
+        
 
        /* http post method 
         *private static void post()

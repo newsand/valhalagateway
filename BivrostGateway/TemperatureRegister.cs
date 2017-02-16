@@ -74,12 +74,12 @@ namespace BivrostGateway
         }
 
         public Dictionary<string, object> toDictionary()
-            {
+        {
             Dictionary<string, object> v_parsedRegister = new Dictionary<string, object>();
-            v_parsedRegister.Add("hardwareId",HardwareId);
-            v_parsedRegister.Add("registerTime",RegisterTime.ToString("yyyy-MM-dd'T'HH:mm:ss.fffZ"));
-            v_parsedRegister.Add("sensorId",SensorId);
-            v_parsedRegister.Add("temperature",Temperature);
+            v_parsedRegister.Add("hardwareId", HardwareId);
+            v_parsedRegister.Add("registerTime", RegisterTime.ToString("yyyy-MM-dd'T'HH:mm:ss.fffZ"));
+            v_parsedRegister.Add("sensorId", SensorId);
+            v_parsedRegister.Add("temperature", Temperature);
             return v_parsedRegister;
         }
     }

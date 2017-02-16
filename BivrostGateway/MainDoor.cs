@@ -19,16 +19,15 @@ namespace BivrostGateway
             string message;
             StringComparer stringComparer = StringComparer.OrdinalIgnoreCase;
             Thread readThread = new Thread(Read);
-            //WebConnector a = new WebConnector();
-            // a.getData();
-
+            WebConnector a = new WebConnector();
+            TemperatureRegister c = a.getLast();
 
 
 
 
             TemperatureRegister v_temp = new TemperatureRegister(11, 11, DateTimeOffset.UtcNow, 25.4);
-            JsonPost a = new JsonPost("http://localhost:8080/webapi/temperature/insert");
-            a.postData(v_temp.toDictionary());
+            JsonPost b = new JsonPost("http://localhost:8080/webapi/temperature/insert");
+            b.postData(v_temp.toDictionary());
 
             // Create a new SerialPort object with default settings.
             _serialPort = new SerialPort();
