@@ -23,76 +23,74 @@ namespace BivrostGateway
 
         public TemperatureRegister getLast()
         {
-                try
-                {
-                    string result = m_client.DownloadString(m_baseURL + "/webapi/temperature/getLast");
-                    if (result != null)
-                    {
-                        TemperatureRegister b = JsonConvert.DeserializeObject<TemperatureRegister>(result);
-                        return b;
-                    }
-                    else
-                    {
-                        return null;
-                    }
-                }
-                catch (WebException ex)
-                {
-                    if (ex.Status == WebExceptionStatus.ConnectFailure)
-                        System.Threading.Thread.Sleep(1500);
-                    return null;
-                }
-         }
-        public string getLast1()
-        {
-            WebClient webservice = new WebClient();
-            webservice.Headers.Add(HttpRequestHeader.Accept, "*/*");
-            webservice.Headers[HttpRequestHeader.ContentType] = "application/json";
-            string URL = "http://localhost:8080";
             try
             {
-                string result = webservice.DownloadString(URL + "/webapi/temperature/getLast");
+                string result = m_client.DownloadString(m_baseURL + "/webapi/temperature/getLast");
                 if (result != null)
                 {
-                    return result;
+                    TemperatureRegister b = JsonConvert.DeserializeObject<TemperatureRegister>(result);
+                    return b;
                 }
                 else
                 {
-                    return "";
+                    return null;
                 }
             }
             catch (WebException ex)
             {
                 if (ex.Status == WebExceptionStatus.ConnectFailure)
                     System.Threading.Thread.Sleep(1500);
-                return "faild";
+                return null;
             }
         }
-        
 
-       /* http post method 
-        *private static void post()
+        public bool postData(Dictionary<string, object> dictData)
         {
-            var baseAddress = "http://localhost:8080/webapi/temperature/insert";
+            WebClient webClient = new WebClient();
+            byte[] v_encodedResponse;
+            string v_result;
+            byte[] v_requestString;
 
-            var http = (HttpWebRequest)WebRequest.Create(new Uri(baseAddress));
-            http.Accept = "application/json";
-            http.ContentType = "application/json";
-            http.Method = "POST";
+            try
+            {
+                webClient.Headers["content-type"] = "application/json";
+                v_requestString = Encoding.Default.GetBytes(JsonConvert.SerializeObject(dictData, Formatting.Indented));
+                v_encodedResponse = webClient.UploadData(m_baseURL + "/webapi/temperature/insert", "post", v_requestString);
+                v_result = Encoding.Default.GetString(v_encodedResponse);
+                Console.WriteLine(v_result);
+                webClient.Dispose();
+                return true;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            return false;
+        }
 
-            string parsedContent = "{\"hardwareId\":2,\"sensorId\":3,\"temperature\":21.0}";
-            ASCIIEncoding encoding = new ASCIIEncoding();
-            Byte[] bytes = encoding.GetBytes(parsedContent);
+        /* http post method 
+         *private static void post()
+         {
+             var baseAddress = "http://localhost:8080/webapi/temperature/insert";
 
-            Stream newStream = http.GetRequestStream();
-            newStream.Write(bytes, 0, bytes.Length);
-            newStream.Close();
+             var http = (HttpWebRequest)WebRequest.Create(new Uri(baseAddress));
+             http.Accept = "application/json";
+             http.ContentType = "application/json";
+             http.Method = "POST";
 
-            var resposta = http.GetResponse();
+             string parsedContent = "{\"hardwareId\":2,\"sensorId\":3,\"temperature\":21.0}";
+             ASCIIEncoding encoding = new ASCIIEncoding();
+             Byte[] bytes = encoding.GetBytes(parsedContent);
 
-            var stream = resposta.GetResponseStream();
-            var sr = new StreamReader(stream);
-            var content = sr.ReadToEnd();
-        }*/
+             Stream newStream = http.GetRequestStream();
+             newStream.Write(bytes, 0, bytes.Length);
+             newStream.Close();
+
+             var resposta = http.GetResponse();
+
+             var stream = resposta.GetResponseStream();
+             var sr = new StreamReader(stream);
+             var content = sr.ReadToEnd();
+         }*/
     }
 }

@@ -21,14 +21,11 @@ namespace BivrostGateway
             Thread readThread = new Thread(Read);
             WebConnector a = new WebConnector();
             TemperatureRegister c = a.getLast();
+            TemperatureRegister v_temp = new TemperatureRegister(12, 12, DateTimeOffset.UtcNow, 25.4);
+            a.postData(v_temp.toDictionary());
 
-
-
-
-            TemperatureRegister v_temp = new TemperatureRegister(11, 11, DateTimeOffset.UtcNow, 25.4);
-            JsonPost b = new JsonPost("http://localhost:8080/webapi/temperature/insert");
-            b.postData(v_temp.toDictionary());
-
+            
+     
             // Create a new SerialPort object with default settings.
             _serialPort = new SerialPort();
 
