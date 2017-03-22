@@ -10,216 +10,108 @@ namespace BivrostGateway
 {
     class SerialConector
     {
-        #region Memberes
-        private static int K_CONETION_RETRIES = 5;
-        private int m_conectionTries;
-        private bool m_continue;
-        
-        private SerialPort m_serialPort;
-        private Thread m_readingThread;
-        private Thread m_writingThread;
-        private Thread m_postingThread;
-        #endregion
+        //port atributes
+        private SerialPort serialPort;
+        private int baudRate;
+        private String portName;
 
-        #region Create
-        public SerialConector(String p_portName,int p_boudRate, Parity p_parityConfig, int p_dataBits, StopBits p_stopBits, int p_readTimeout, int p_writeTimeout, Handshake p_handshake)
-        {
-            //m_serialPort = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
-            m_serialPort = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
-            m_serialPort.Handshake = p_handshake;
-            m_serialPort.WriteTimeout = p_writeTimeout;
-            m_serialPort.ReadTimeout = p_readTimeout;
-            m_readingThread = new Thread(Read);
-            m_readingThread = new Thread(Read);
-            m_readingThread = new Thread(Read);
-        }
-        //Destructor
-        ~SerialConector()
-        {
-            Dispose(false);
-        }
-        #endregion
 
-        #region Threading
-        public void StartReading()
-        {
-            m_continue = true;
-            m_readingThread.Start();
-        }
-        public void Startposting()
-        {
-            m_continue = true;
-            m_postingThread.Start();
-        }
-        public void StartWriting()
-        {
-            m_continue = true;
-            m_writingThread.Start();
-        }
-        private void Read()
-        {
-            while (m_continue)
-            {
-                try
-                {
-                    string message = m_serialPort.ReadLine();
-                    Console.WriteLine(message);
-                }
-                catch (TimeoutException) { }
-            }
-        }
-        private void Post()
-        {
-            
-        }
-        private void write()
-        {
 
-        }
-        public void StopReading()
+        static string serialBuffer = "";
+        static string expectedEcho = null;
+        static object expectedEchoLock = new object();
+        static ManualResetEvent expectedEchoReceived = new ManualResetEvent(false);
+
+
+        //listening thread attributes
+        public Thread listeningThread;
+        public Thread sendThread;
+        private Queue<byte> receiveBuffer;
+        private Queue<TemperatureRegister> m_registereBuffer;
+        private Queue<Tuple<DateTime, byte[]>> dataPacketBuffer;
+        private Queue<byte[]> sendBuffer;
+        private bool working;
+
+        private int maxUnsucessfullConnections = 3;
+        private int unsucessfullConnections;
+
+        private const int RO_TIME = 30;
+
+        #region Serial Connect/Disconnect
+        public SerialConector(String serialParam = null)
         {
-            m_continue = false;
-            //Wait for thread to finish
-            m_readingThread.Join(/*thread timeout + 50ms*/450);
-            //Kill frozen thread
-            if (m_readingThread.IsAlive)
-                m_readingThread.Abort();
-        }
-        #endregion
+            this.portName = "COM3";
 
-        #region ManualSerialConfig
-        // Display Port values and prompt user to enter a port.
-        public static string SetPortName(string defaultPortName)
-        {
-            string portName;
+            this.listeningThread = new Thread(this.listenThreadFunction);
+            this.listeningThread.Name = "beringListener";
+            this.receiveBuffer = new Queue<byte>();
+            this.m_registereBuffer=new Queue< TemperatureRegister > ();
+            this.dataPacketBuffer = new Queue<Tuple<DateTime, byte[]>>();
 
-            Console.WriteLine("Available Ports:");
-            foreach (string s in SerialPort.GetPortNames())
-            {
-                Console.WriteLine("   {0}", s);
-            }
+            this.sendThread = new Thread(this.sendThreadFunction);
+            this.sendThread.Name = "beringSender";
+            this.sendBuffer = new Queue<byte[]>();
 
-            Console.Write("Enter COM port value (Default: {0}): ", defaultPortName);
-            portName = Console.ReadLine();
-
-            if (portName == "" || !(portName.ToLower()).StartsWith("com"))
-            {
-                portName = defaultPortName;
-            }
-            return portName;
-        }
-        // Display BaudRate values and prompt user to enter a value.
-        public static int SetPortBaudRate(int defaultPortBaudRate)
-        {
-            string baudRate;
-
-            Console.Write("Baud Rate(default:{0}): ", defaultPortBaudRate);
-            baudRate = Console.ReadLine();
-
-            if (baudRate == "")
-            {
-                baudRate = defaultPortBaudRate.ToString();
-            }
-
-            return int.Parse(baudRate);
+            this.baudRate = 9600;
+            this.serialPort = new SerialPort(portName, baudRate, Parity.None, 8, StopBits.One);
+            this.serialPort.Handshake = Handshake.None;
+            this.serialPort.WriteTimeout = 200;
+            this.serialPort.ReadTimeout = 50;
         }
 
-        // Display PortParity values and prompt user to enter a value.
-        public static Parity SetPortParity(Parity defaultPortParity)
-        {
-            string parity;
-
-            Console.WriteLine("Available Parity options:");
-            foreach (string s in Enum.GetNames(typeof(Parity)))
-            {
-                Console.WriteLine("   {0}", s);
-            }
-
-            Console.Write("Enter Parity value (Default: {0}):", defaultPortParity.ToString(), true);
-            parity = Console.ReadLine();
-
-            if (parity == "")
-            {
-                parity = defaultPortParity.ToString();
-            }
-
-            return (Parity)Enum.Parse(typeof(Parity), parity, true);
-        }
-        // Display DataBits values and prompt user to enter a value.
-        public static int SetPortDataBits(int defaultPortDataBits)
-        {
-            string dataBits;
-
-            Console.Write("Enter DataBits value (Default: {0}): ", defaultPortDataBits);
-            dataBits = Console.ReadLine();
-
-            if (dataBits == "")
-            {
-                dataBits = defaultPortDataBits.ToString();
-            }
-
-            return int.Parse(dataBits.ToUpperInvariant());
-        }
-
-        // Display StopBits values and prompt user to enter a value.
-        public static StopBits SetPortStopBits(StopBits defaultPortStopBits)
-        {
-            string stopBits;
-
-            Console.WriteLine("Available StopBits options:");
-            foreach (string s in Enum.GetNames(typeof(StopBits)))
-            {
-                Console.WriteLine("   {0}", s);
-            }
-
-            Console.Write("Enter StopBits value (None is not supported and \n" +
-             "raises an ArgumentOutOfRangeException. \n (Default: {0}):", defaultPortStopBits.ToString());
-            stopBits = Console.ReadLine();
-
-            if (stopBits == "")
-            {
-                stopBits = defaultPortStopBits.ToString();
-            }
-
-            return (StopBits)Enum.Parse(typeof(StopBits), stopBits, true);
-        }
-        public static Handshake SetPortHandshake(Handshake defaultPortHandshake)
-        {
-            string handshake;
-
-            Console.WriteLine("Available Handshake options:");
-            foreach (string s in Enum.GetNames(typeof(Handshake)))
-            {
-                Console.WriteLine("   {0}", s);
-            }
-
-            Console.Write("Enter Handshake value (Default: {0}):", defaultPortHandshake.ToString());
-            handshake = Console.ReadLine();
-
-            if (handshake == "")
-            {
-                handshake = defaultPortHandshake.ToString();
-            }
-
-            return (Handshake)Enum.Parse(typeof(Handshake), handshake, true);
-        }
-        #endregion
-
-        #region Serial Conection
         public void SerialConnect()
         {
-            m_serialPort.Open();
+            try
+            {
+                serialPort.Open();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("", "Cannot open serialPort err: " + e.Message);
+                Environment.Exit(0);
+            }
+            if (serialPort.IsOpen)
+            {
+                serialPort.DiscardInBuffer();
+                serialPort.DiscardOutBuffer();
+                if (serialPort.Handshake == Handshake.None)
+                {
+                    serialPort.DtrEnable = false;
+                    serialPort.RtsEnable = false;
+                }
+            }
         }
 
         public void SerialDisconnect()
         {
-            m_serialPort.Close();
+            serialPort.Close();
         }
-        public void SerialReconect()
+        #endregion
+
+        #region Thread functions (start, stop, reconect, destroy)
+        public void startWorking()
         {
-            if (m_conectionTries <= K_CONETION_RETRIES)
+            working = true;
+            sendThread.Start();
+            listeningThread.Start();
+        }
+
+
+        public void stopListening()
+        {
+            working = false;
+            //Wait for thread to finish
+            listeningThread.Join(/*thread timeout + 50ms*/450);
+            //Kill frozen thread
+            if (listeningThread.IsAlive)
+                listeningThread.Abort();
+        }
+
+        void Reconnect()
+        {
+            if (unsucessfullConnections <= maxUnsucessfullConnections)
             {
-                if (m_serialPort.IsOpen)
+                if (serialPort.IsOpen)
                 {
                     try
                     {
@@ -237,12 +129,19 @@ namespace BivrostGateway
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("", "Cannot reconnect serial. Error: " + ex.Message);
+                   Console.WriteLine("", "Cannot reconnect serial. Error: " + ex.Message);
                 }
-                m_conectionTries += 1;
+                unsucessfullConnections += 1;
             }
         }
 
+        //Destructor
+        ~SerialConector()
+        {
+            Dispose(false);
+        }
+
+        //Disposable
         public void Dispose()
         {
             Dispose(true);
@@ -251,11 +150,129 @@ namespace BivrostGateway
         protected virtual void Dispose(bool disposing)
         {
             this.SerialDisconnect();
+
             //Evita problemas com o garbage collector
             if (disposing)
                 GC.SuppressFinalize(this);
         }
         #endregion
 
+        #region Listening Thread function (do the hard work)
+
+        private void listenThreadFunction()
+        {
+            byte currentByte;
+            string v_currentLine;
+            string[] v_splitedString;
+            TemperatureRegister v_currentRegister;
+            char[] delimiters = new char[] {';',' ',':' };
+            while (working)
+            {
+                try
+                {
+                    v_currentLine = serialPort.ReadLine();
+                    Console.WriteLine("CURRENT LINE: " + v_currentLine);
+                    v_splitedString = v_currentLine.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+                    if (v_splitedString.Length <= 3)
+                        continue;
+                    else {
+                        v_currentRegister = new TemperatureRegister(int.Parse(v_splitedString[1]),int.Parse(v_splitedString[3]),DateTimeOffset.Now,double.Parse(v_splitedString[5]));
+                        this.m_registereBuffer.Enqueue(v_currentRegister);
+                    }
+                    currentByte = (byte)serialPort.ReadByte();
+                    Console.WriteLine("CURRENT BYTE" + currentByte);
+                    receiveBuffer.Enqueue(currentByte);
+                }
+                catch (Exception ex)
+                {
+                    //The specified port is not open. 
+                    if (ex is InvalidOperationException)
+                    {
+                        Console.WriteLine("", "Serial exception: " + ex.Message);
+                        Reconnect();
+                    }
+                    //No byte was read.
+                    else if (ex is TimeoutException)
+                    {
+                        unsucessfullConnections = 0;
+                    }
+                }
+            }
+        }
+
+        #endregion
+
+        #region Sending thread function
+        private void sendThreadFunction()
+        {
+            byte[] pktResponse;
+            while (working)
+            {
+                if (sendBuffer.Count > 0)
+                {
+                    lock (sendBuffer)
+                    {
+                        pktResponse = sendBuffer.Dequeue();
+                    }
+                    serialPort.Write(pktResponse, 0, pktResponse.Length);
+                    Thread.Sleep(RO_TIME);
+                }
+                Thread.Sleep(22);
+            }
+
+        }
+
+        #endregion
+
+        // Public interface
+        #region Get packet from listener output buffer
+        public int getPacketCount()
+        {
+            int packetCount = 0;
+            lock (dataPacketBuffer)
+                packetCount = dataPacketBuffer.Count;
+
+            return packetCount;
+        }
+
+        public Tuple<DateTime, byte[]> DequeuePacket()
+        {
+            //Critical Session;
+            lock (dataPacketBuffer)
+            {
+                if (getPacketCount() > 0)
+                {
+                    if (dataPacketBuffer.Count > 0)
+                    {
+                        return (dataPacketBuffer.Dequeue());
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+                else
+                {
+                    // No data to process
+                    return null;
+                }
+            }
+        }
+        #endregion
+        #region GET and SET
+        public String getPortName()
+        {
+            return this.portName;
+        }
+        public void sendResetSignal()
+        {
+            serialPort.RtsEnable = true;
+        }
+        public void clearResetSignal()
+        {
+            serialPort.RtsEnable = false;
+        }
+        #endregion
     }
 }
+
