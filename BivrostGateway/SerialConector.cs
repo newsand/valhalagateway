@@ -26,8 +26,7 @@ namespace BivrostGateway
         //listening thread attributes
         public Thread listeningThread;
         public Thread sendThread;
-        private Queue<byte> receiveBuffer;
-        private Queue<TemperatureRegister> m_registereBuffer;
+        private Queue<TemperatureRegister> m_registerBuffer;
         private Queue<Tuple<DateTime, byte[]>> dataPacketBuffer;
         private Queue<byte[]> sendBuffer;
         private bool working;
@@ -44,8 +43,7 @@ namespace BivrostGateway
 
             this.listeningThread = new Thread(this.listenThreadFunction);
             this.listeningThread.Name = "beringListener";
-            this.receiveBuffer = new Queue<byte>();
-            this.m_registereBuffer=new Queue< TemperatureRegister > ();
+            this.m_registerBuffer=new Queue< TemperatureRegister > ();
             this.dataPacketBuffer = new Queue<Tuple<DateTime, byte[]>>();
 
             this.sendThread = new Thread(this.sendThreadFunction);
@@ -92,8 +90,8 @@ namespace BivrostGateway
         public void startWorking()
         {
             working = true;
-            sendThread.Start();
             listeningThread.Start();
+            sendThread.Start();
         }
 
 
@@ -176,12 +174,11 @@ namespace BivrostGateway
                     if (v_splitedString.Length <= 3)
                         continue;
                     else {
-                        v_currentRegister = new TemperatureRegister(int.Parse(v_splitedString[1]),int.Parse(v_splitedString[3]),DateTimeOffset.Now,double.Parse(v_splitedString[5]));
-                        this.m_registereBuffer.Enqueue(v_currentRegister);
+                        v_currentRegister = new TemperatureRegister(int.Parse(v_splitedString[1]),int.Parse(v_splitedString[3]),DateTimeOffset.UtcNow,double.Parse(v_splitedString[5]));
+                        this.m_registerBuffer.Enqueue(v_currentRegister);
                     }
                     currentByte = (byte)serialPort.ReadByte();
                     Console.WriteLine("CURRENT BYTE" + currentByte);
-                    receiveBuffer.Enqueue(currentByte);
                 }
                 catch (Exception ex)
                 {
@@ -205,19 +202,21 @@ namespace BivrostGateway
         #region Sending thread function
         private void sendThreadFunction()
         {
-            byte[] pktResponse;
+            TemperatureRegister v_postingRegister;
             while (working)
             {
-                if (sendBuffer.Count > 0)
+                if (this.m_registerBuffer.Count > 0)
                 {
-                    lock (sendBuffer)
+                    lock (this.m_registerBuffer)
                     {
-                        pktResponse = sendBuffer.Dequeue();
+                        v_postingRegister = this.m_registerBuffer.Dequeue();
                     }
-                    serialPort.Write(pktResponse, 0, pktResponse.Length);
+
+                    WebConnector v_apiConnector = new WebConnector();
+                    v_apiConnector.postData(v_postingRegister.toDictionary());
                     Thread.Sleep(RO_TIME);
                 }
-                Thread.Sleep(22);
+                Thread.Sleep(2000);
             }
 
         }

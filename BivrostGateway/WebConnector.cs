@@ -12,7 +12,8 @@ namespace BivrostGateway
     class WebConnector
     {
         private WebClient m_client;
-        string m_baseURL = "http://localhost:8080";
+        //        string m_baseURL = "http://localhost:8080";
+        string m_baseURL = "https://midgardserver.herokuapp.com"; 
         public WebConnector()
         {
             m_client = new WebClient();
