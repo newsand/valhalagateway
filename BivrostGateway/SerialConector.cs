@@ -39,7 +39,7 @@ namespace BivrostGateway
         #region Serial Connect/Disconnect
         public SerialConector(String serialParam = null)
         {
-            this.portName = "COM3";
+            this.portName = "COM4";
 
             this.listeningThread = new Thread(this.listenThreadFunction);
             this.listeningThread.Name = "beringListener";
@@ -174,7 +174,7 @@ namespace BivrostGateway
                     if (v_splitedString.Length <= 3)
                         continue;
                     else {
-                        v_currentRegister = new TemperatureRegister(int.Parse(v_splitedString[1]),int.Parse(v_splitedString[3]),DateTimeOffset.UtcNow,double.Parse(v_splitedString[5]));
+                        v_currentRegister = new TemperatureRegister(int.Parse(v_splitedString[1]),int.Parse(v_splitedString[3]),DateTimeOffset.UtcNow,v_splitedString[5]);
                         this.m_registerBuffer.Enqueue(v_currentRegister);
                     }
                     currentByte = (byte)serialPort.ReadByte();

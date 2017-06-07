@@ -21,6 +21,15 @@ namespace BivrostGateway
             this.m_temperature = m_temperature;
         }
 
+        public TemperatureRegister(int m_hardwareId, int m_sensorId, DateTimeOffset m_registerTime, string m_temperature)
+        {
+            this.m_hardwareId = m_hardwareId;
+            this.m_sensorId = m_sensorId;
+            this.m_registerTime = m_registerTime;
+            
+            this.m_temperature = double.Parse(m_temperature.Replace(".", ","));
+        }
+
         public int HardwareId
         {
             get
